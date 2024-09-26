@@ -113,8 +113,7 @@ export async function getImages(message: string): Promise<{ title: string; link:
         },
         body: data
     };
-    try {
-        const response = await fetch(url, requestOptions);
+    try {        const response = await fetch(url, requestOptions);
         if (!response.ok) {
             throw new Error(`Network response was not ok. Status: ${response.status}`);
         }
