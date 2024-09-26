@@ -55,7 +55,7 @@ export async function braveSearch(message: string, numberOfPagesToScan = config.
  * @returns A Promise that resolves to an array of SearchResult objects.
  * @throws Will throw an error if the API request fails or returns an invalid response.
  */
-export async function duckduckgo_search(message: string, numberOfPagesToScan = 30): Promise<SearchResult[]> {
+export async function duckDuckGoSearch(message: string, numberOfPagesToScan = 30): Promise<SearchResult[]> {
     try {
         console.log('DuckDuckGo Search');
         const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(message)}&format=json&pretty=1`;
@@ -77,20 +77,20 @@ export async function duckduckgo_search(message: string, numberOfPagesToScan = 3
             }));
         return final;
     } catch (error) {
-        console.error('Error fetching duckduckgo search results:', error);
+        console.error('Error fetching DuckDuckGo search results:', error);
         throw error;
     }
 }
 
 /**
- * Performs search using SerpApi with duckduckgo
+ * Performs search using SerpApi with DuckDuckGo
  *
  * @param message - The search query string.
  * @param numberOfPagesToScan - The maximum number of results to return. Defaults to the value in config.
  * @returns A Promise that resolves to an array of SearchResult objects.
  * @throws Will throw an error if the API request fails or returns an invalid response.
  */
-export async function duckduckgo_using_serpapi(message: string, numberOfPagesToScan = config.numberOfPagesToScan): Promise<SearchResult[]> {
+export async function duckDuckGoUsingSerpApi(message: string, numberOfPagesToScan = config.numberOfPagesToScan): Promise<SearchResult[]> {
     try {
         const url = `https://serpapi.com/search.json?engine=duckduckgo&q=${encodeURIComponent(message)}&api_key=${process.env.SERPAPI_API_KEY}&num=${numberOfPagesToScan}`;
         const response = await fetch(url);
@@ -112,8 +112,6 @@ export async function duckduckgo_using_serpapi(message: string, numberOfPagesToS
         throw error;
     }
 }
-
-
 export async function googleSearch(message: string, numberOfPagesToScan = config.numberOfPagesToScan): Promise<SearchResult[]> {
     try {
         const url = `https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_SEARCH_API_KEY}&cx=${process.env.GOOGLE_CX}&q=${encodeURIComponent(message)}&num=${numberOfPagesToScan}`;
