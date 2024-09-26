@@ -2,23 +2,27 @@
 import { SearchResult } from '@/components/answer/SearchResultsComponent';
 import { config } from '../config';
 
-export async function getSearchResults(userMessage: string): Promise<any> {
-    switch (config.searchProvider) {
-        case "brave":
-            return braveSearch(userMessage);
-        case "serper":
-            return serperSearch(userMessage);
-        case "google":
-            return googleSearch(userMessage);
-        case "duckduckgo":
-            return duckduckgo_search(userMessage);
-        case "duckduckgo-serpapi":
-            return duckduckgo_using_serpapi(userMessage);
-        default:
-            return Promise.reject(new Error(`Unsupported search provider: ${config.searchProvider}`));
+export async function getSearchResults(userMessage: string): Promise<SearchResult[]> {
+    try {
+        switch (config.searchProvider) {
+            case "brave":
+                return await braveSearch(userMessage);
+            case "serper":
+                return await serperSearch(userMessage);
+            case "google":
+                return await googleSearch(userMessage);
+            case "duckduckgo":
+                return await duckduckgo_search(userMessage);
+            case "duckduckgo-serpapi":
+                return await duckduckgo_using_serpapi(userMessage);
+            default:
+                throw new Error(`Unsupported search provider: ${config.searchProvider}`);
+        }
+    } catch (error) {
+        console.error("Error in getSearchResults:", error);
+        throw error;
     }
 }
-
 export async function braveSearch(message: string, numberOfPagesToScan = config.numberOfPagesToScan): Promise<SearchResult[]> {
     try {
         const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(message)}&count=${numberOfPagesToScan}`, {
@@ -43,56 +47,55 @@ export async function braveSearch(message: string, numberOfPagesToScan = config.
         return final;
     } catch (error) {
         console.error('Error fetching search results:', error);
-        throw error;
-    }
-}
-
-export async function duckduckgo_search(message: string, numberOfPagesToScan = 30): Promise<SearchResult[]> {
-    try {
-        console.log('DuckDuckGo Search');
-        const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(message)}&format=json&pretty=1`;
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+        export async function duckduckgoSearch(message: string, numberOfPagesToScan = 30): Promise<SearchResult[]> {
+            try {
+                console.log('DuckDuckGo Search');
+                const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(message)}&format=json&pretty=1`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const jsonResponse = await response.json();
+                if (!jsonResponse.RelatedTopics) {
+                    throw new Error('Invalid API response format');
+                }
+                const final = jsonResponse.RelatedTopics
+                    .filter((result: any) => result.FirstURL && result.Text) // Filter out results without URL or Text
+                    .slice(0, numberOfPagesToScan) // Limit results to numberOfPagesToScan
+                    .map((result: any): SearchResult => ({
+                        title: result.Text,
+                        link: result.FirstURL,
+                        favicon: `https://icons.duckduckgo.com/ip3/${new URL(result.FirstURL).hostname}.ico`
+                    }));
+                return final;
+            } catch (error) {
+                console.error('Error fetching duckduckgo search results:', error);
+                throw error;
+            }
         }
-        const jsonResponse = await response.json();
-        if (!jsonResponse.RelatedTopics) {
-            throw new Error('Invalid API response format');
-        }
-        const final = jsonResponse.RelatedTopics
-            .filter((result: any) => result.FirstURL && result.Text) // Filter out results without URL or Text
-            .slice(0, numberOfPagesToScan) // Limit results to numberOfPagesToScan
-            .map((result: any): SearchResult => ({
-                title: result.Text,
-                link: result.FirstURL,
-                favicon: `https://icons.duckduckgo.com/ip3/${new URL(result.FirstURL).hostname}.ico`
-            }));
-        return final;
-    } catch (error) {
-        console.error('Error fetching duckduckgo search results:', error);
-        throw error;
-    }
-}
-
-export async function duckduckgo_using_serpapi(message: string, numberOfPagesToScan = config.numberOfPagesToScan): Promise<SearchResult[]> {
-    try {
-        const url = `https://serpapi.com/search.json?engine=duckduckgo&q=${encodeURIComponent(message)}&api_key=${process.env.SERPAPI_API_KEY}&num=${numberOfPagesToScan}`;
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const jsonResponse = await response.json();
-        if (!jsonResponse.organic_results) {
-            throw new Error('Invalid API response format');
-        }
-        const final = jsonResponse.organic_results.map((result: any): SearchResult => ({
-            title: result.title,
-            link: result.link,
-            favicon: result.favicon || ''
-        }));
-        return final;
-    } catch (error) {
-        console.error('Error fetching SerpApi DuckDuckGo search results:', error);
+        
+        export async function duckduckgoUsingSerpapi(message: string, numberOfPagesToScan = config.numberOfPagesToScan): Promise<SearchResult[]> {
+            try {
+                const url = `https://serpapi.com/search.json?engine=duckduckgo&q=${encodeURIComponent(message)}&api_key=${process.env.SERPAPI_API_KEY}&num=${numberOfPagesToScan}`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const jsonResponse = await response.json();
+                if (!jsonResponse.organic_results) {
+                    throw new Error('Invalid API response format');
+                }
+                const final = jsonResponse.organic_results.map((result: any): SearchResult => ({
+                    title: result.title,
+                    link: result.link,
+                    favicon: result.favicon || ''
+                }));
+                return final;
+            } catch (error) {
+                console.error('Error fetching SerpApi DuckDuckGo search results:', error);
+                throw error;
+            }
+        }        }        console.error('Error fetching SerpApi DuckDuckGo search results:', error);
         throw error;
     }
 }
